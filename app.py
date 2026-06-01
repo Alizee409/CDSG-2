@@ -131,4 +131,41 @@ with tab2:
         with st.form("form_saisie"):
             st.subheader("⚡ Énergie & Fluides")
             c1, c2, c3 = st.columns(3)
-            elec = c1.number_input("
+            elec = c1.number_input("Consommation Électricité (kWh)", min_value=0.0, step=1.0, value=current_data["Consommation Électricité (kWh)"] if current_data else 0.0)
+            gaz = c2.number_input("Consommation Gaz (m3)", min_value=0.0, step=1.0, value=current_data["Consommation Gaz (m3)"] if current_data else 0.0)
+            eau = c3.number_input("Consommation Eau (m3)", min_value=0.0, step=1.0, value=current_data["Consommation Eau (m3)"] if current_data else 0.0)
+            
+            st.subheader("🍽️ Pertes et Déchets de la Cantine")
+            c4, c5, c6 = st.columns(3)
+            dechets = c4.number_input("Déchets alimentaires globaux (kg)", min_value=0.0, step=0.5, value=current_data["Déchets Alimentaires (kg)"] if current_data else 0.0)
+            pain = c5.number_input("Pain jeté / restes de pain (kg)", min_value=0.0, step=0.5, value=current_data["Pain jeté (kg)"] if current_data else 0.0)
+            serviettes = c6.number_input("Serviettes en papier utilisées (kg)", min_value=0.0, step=0.1, value=current_data["Serviettes papier (kg)"] if current_data else 0.0)
+            
+            c7, c8 = st.columns(2)
+            fruits = c7.number_input("Fruits entamés ou non consommés (kg)", min_value=0.0, step=0.5, value=current_data["Fruits entamés (kg)"] if current_data else 0.0)
+            emballages = c8.number_input("Emballages et plastiques jetés (kg)", min_value=0.0, step=0.5, value=current_data["Emballages (kg)"] if current_data else 0.0)
+            
+            st.markdown("<br>", unsafe_allow_html=True)
+            submit = st.form_submit_button("Valider les données")
+            
+            if submit:
+                # 1. Supprimer l'ancienne ligne
+                st.session_state.data_history = [item for item in st.session_state.data_history if item["Collège"] != st.session_state.auth]
+                
+                # 2. Insérer les nouvelles données
+                new_data = {
+                    "Collège": st.session_state.auth, 
+                    "Consommation Électricité (kWh)": elec, "Consommation Gaz (m3)": gaz, "Consommation Eau (m3)": eau,
+                    "Déchets Alimentaires (kg)": dechets, "Pain jeté (kg)": pain, 
+                    "Serviettes papier (kg)": serviettes, "Fruits entamés (kg)": fruits, "Emballages (kg)": emballages
+                }
+                st.session_state.data_history.append(new_data)
+                
+                # Active l'affichage du message géant et force le rafraîchissement immédiat
+                st.session_state.show_success = True
+                st.rerun()
+    else:
+        st.info("👈 Veuillez sélectionner votre collège et entrer son code secret dans la barre latérale pour débloquer le formulaire de saisie.")
+
+st.sidebar.divider()
+st.sidebar.caption("Outil développé pour le Défi Bas Carbone 2026")
