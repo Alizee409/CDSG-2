@@ -12,26 +12,26 @@ COLLEGES_AUTH = {
     "Collège Victor Hugo": "HUGO2024"
 }
 
-# Données de départ fictives pour que les graphiques ne soient pas vides au lancement
+# Données initiales (une seule ligne par collège)
 if 'data_history' not in st.session_state:
     st.session_state.data_history = [
         {
             "Collège": "Collège Jean Jaurès", 
-            "Électricité (kWh)": 1200, "Gaz (m3)": 450, 
-            "Déchets Alimentaires (kg)": 25, "Pain jeté (kg)": 5, 
-            "Serviettes papier (unités)": 120, "Fruits entamés (kg)": 8, "Emballages (kg)": 14
+            "Électricité (kWh)": 1200.0, "Gaz (m3)": 450.0, 
+            "Déchets Alimentaires (kg)": 25.0, "Pain jeté (kg)": 5.0, 
+            "Serviettes papier (unités)": 120, "Fruits entamés (kg)": 8.0, "Emballages (kg)": 14.0
         },
         {
             "Collège": "Collège Marie Curie", 
-            "Électricité (kWh)": 980, "Gaz (m3)": 380, 
-            "Déchets Alimentaires (kg)": 18, "Pain jeté (kg)": 2, 
-            "Serviettes papier (unités)": 90, "Fruits entamés (kg)": 4, "Emballages (kg)": 9
+            "Électricité (kWh)": 980.0, "Gaz (m3)": 380.0, 
+            "Déchets Alimentaires (kg)": 18.0, "Pain jeté (kg)": 2.0, 
+            "Serviettes papier (unités)": 90, "Fruits entamés (kg)": 4.0, "Emballages (kg)": 9.0
         },
         {
             "Collège": "Collège Victor Hugo", 
-            "Électricité (kWh)": 1450, "Gaz (m3)": 520, 
-            "Déchets Alimentaires (kg)": 35, "Pain jeté (kg)": 9, 
-            "Serviettes papier (unités)": 200, "Fruits entamés (kg)": 12, "Emballages (kg)": 22
+            "Électricité (kWh)": 1450.0, "Gaz (m3)": 520.0, 
+            "Déchets Alimentaires (kg)": 35.0, "Pain jeté (kg)": 9.0, 
+            "Serviettes papier (unités)": 200, "Fruits entamés (kg)": 12.0, "Emballages (kg)": 22.0
         }
     ]
 
@@ -58,7 +58,7 @@ else:
 
 # --- INTERFACE PRINCIPALE ---
 st.title("🌱 Défi Bas Carbone Inter-Collèges")
-st.markdown("Mesurez, comparez et réduisez les consommations de vos établissements scolaires.")
+st.markdown("Mesurez, comparez et mettez à jour les consommations de vos établissements scolaires.")
 
 tab1, tab2 = st.tabs(["📊 Classement & Comparaisons", "📝 Saisie des consommations"])
 
@@ -87,7 +87,6 @@ with tab1:
     # 2. SECTION CANTINE
     st.subheader("🍽️ Zoom sur la Cantine (Gaspillage et Déchets)")
     
-    # Restructuration des données pour faire un graphique multi-barres pour la cantine
     df_cantine = df.melt(id_vars=["Collège"], 
                          value_vars=["Déchets Alimentaires (kg)", "Pain jeté (kg)", "Serviettes papier (unités)", "Fruits entamés (kg)", "Emballages (kg)"],
                          var_name="Type de déchet", value_name="Quantité")
@@ -107,27 +106,33 @@ with tab2:
     if st.session_state.auth:
         st.header(f"✍️ Formulaire de saisie pour : {st.session_state.auth}")
         
+        # Trouver les données actuelles de ce collège pour pré-remplir le formulaire
+        current_data = next((item for item in st.session_state.data_history if item["Collège"] == st.session_state.auth), None)
+        
         with st.form("form_saisie"):
             st.subheader("⚡ Consommation d'Énergie")
             c1, c2 = st.columns(2)
-            elec = c1.number_input("Électricité consommée (kWh)", min_value=0.0, step=1.0)
-            gaz = c2.number_input("Gaz naturel consommé (m3)", min_value=0.0, step=1.0)
+            elec = c1.number_input("Électricité consommée (kWh)", min_value=0.0, step=1.0, value=current_data["Électricité (kWh)"] if current_data else 0.0)
+            gaz = c2.number_input("Gaz naturel consommé (m3)", min_value=0.0, step=1.0, value=current_data["Gaz (m3)"] if current_data else 0.0)
             
             st.subheader("🍽️ Pertes et Déchets de la Cantine")
             c3, c4, c5 = st.columns(3)
-            dechets = c3.number_input("Déchets alimentaires globaux (kg)", min_value=0.0, step=0.5)
-            pain = c4.number_input("Pain jeté / restes de pain (kg)", min_value=0.0, step=0.5)
-            serviettes = c5.number_input("Serviettes en papier utilisées (unités)", min_value=0, step=1)
+            dechets = c3.number_input("Déchets alimentaires globaux (kg)", min_value=0.0, step=0.5, value=current_data["Déchets Alimentaires (kg)"] if current_data else 0.0)
+            pain = c4.number_input("Pain jeté / restes de pain (kg)", min_value=0.0, step=0.5, value=current_data["Pain jeté (kg)"] if current_data else 0.0)
+            serviettes = c5.number_input("Serviettes en papier utilisées (unités)", min_value=0, step=1, value=int(current_data["Serviettes papier (unités)"]) if current_data else 0)
             
             c6, c7 = st.columns(2)
-            fruits = c6.number_input("Fruits entamés ou non consommés (kg)", min_value=0.0, step=0.5)
-            emballages = c7.number_input("Emballages et plastiques jetés (kg)", min_value=0.0, step=0.5)
+            fruits = c6.number_input("Fruits entamés ou non consommés (kg)", min_value=0.0, step=0.5, value=current_data["Fruits entamés (kg)"] if current_data else 0.0)
+            emballages = c7.number_input("Emballages et plastiques jetés (kg)", min_value=0.0, step=0.5, value=current_data["Emballages (kg)"] if current_data else 0.0)
             
             st.markdown("<br>", unsafe_allow_html=True)
-            submit = st.form_submit_button("Enregistrer les consommations du collège 🚀")
+            submit = st.form_submit_button("Écraser et mettre à jour les données 🚀")
             
             if submit:
-                # Ajouter la nouvelle ligne saisie à l'historique
+                # 1. Supprimer l'ancienne ligne de CE collège uniquement
+                st.session_state.data_history = [item for item in st.session_state.data_history if item["Collège"] != st.session_state.auth]
+                
+                # 2. Insérer les nouvelles données à la place
                 new_data = {
                     "Collège": st.session_state.auth, 
                     "Électricité (kWh)": elec, "Gaz (m3)": gaz, 
@@ -135,7 +140,8 @@ with tab2:
                     "Serviettes papier (unités)": serviettes, "Fruits entamés (kg)": fruits, "Emballages (kg)": emballages
                 }
                 st.session_state.data_history.append(new_data)
-                st.success(f"Félicitations ! Les données du {st.session_state.auth} ont été ajoutées et le tableau de bord a été mis à jour.")
+                st.success(f"Données du {st.session_state.auth} écrasées et mises à jour avec succès !")
+                st.rerun()
     else:
         st.info("👈 Veuillez sélectionner votre collège et entrer son code secret dans la barre latérale pour débloquer le formulaire de saisie.")
 
