@@ -1,0 +1,115 @@
+import streamlit as st
+import pandas as pd
+import plotly.express as px
+
+# --- CONFIGURATION ---
+st.set_page_config(page_title="Défi Bas Carbone Collèges", layout="wide")
+
+# Liste des collèges autorisés et leurs codes d'accès (à adapter)
+COLLEGES_AUTH = {
+    "Collège Jean Jaurès": "JAURES2024",
+    "Collège Marie Curie": "CURIE2024",
+    "Collège Victor Hugo": "HUGO2024"
+}
+
+# Initialisation de données fictives pour le tableau comparatif
+# Dans un projet réel, ces données seraient chargées depuis une DB ou un Google Sheet.
+if 'data_history' not in st.session_state:
+    st.session_state.data_history = [
+        {"Collège": "Collège Jean Jaurès", "Elec (kWh)": 1200, "Gaz (m3)": 450, "Gaspillage (kg)": 25, "Pain (kg)": 5, "CO2 (kg)": 312},
+        {"Collège": "Collège Marie Curie", "Elec (kWh)": 980, "Gaz (m3)": 380, "Gaspillage (kg)": 18, "Pain (kg)": 2, "CO2 (kg)": 245},
+        {"Collège": "Collège Victor Hugo", "Elec (kWh)": 1450, "Gaz (m3)": 520, "Gaspillage (kg)": 32, "Pain (kg)": 8, "CO2 (kg)": 410}
+    ]
+
+# --- LOGIN ---
+if 'auth' not in st.session_state:
+    st.session_state.auth = None
+
+st.sidebar.title("🔐 Accès Établissement")
+if st.session_state.auth is None:
+    with st.sidebar:
+        college_sel = st.selectbox("Sélectionnez votre collège", [""] + list(COLLEGES_AUTH.keys()))
+        password = st.text_input("Code d'accès", type="password")
+        if st.button("Se connecter"):
+            if COLLEGES_AUTH.get(college_sel) == password:
+                st.session_state.auth = college_sel
+                st.rerun()
+            else:
+                st.error("Identifiants incorrects")
+else:
+    st.sidebar.success(f"Connecté : {st.session_state.auth}")
+    if st.sidebar.button("Se déconnecter"):
+        st.session_state.auth = None
+        st.rerun()
+
+# --- INTERFACE PRINCIPALE ---
+st.title("🌱 Plateforme Défi Bas Carbone")
+st.markdown(f"**Bienvenue sur l'outil de suivi inter-collèges.**")
+
+tab1, tab2 = st.tabs(["📈 Tableau de Bord & Comparaison", "✍️ Saisie des Données"])
+
+with tab1:
+    st.header("Analyse de la Performance")
+    df = pd.DataFrame(st.session_state.data_history)
+    
+    col1, col2 = st.columns([2, 1])
+    
+    with col1:
+        st.subheader("Classement CO2 (Impact Total)")
+        fig = px.bar(df, x="Collège", y="CO2 (kg)", color="Collège", text_auto=True,
+                     color_discrete_sequence=px.colors.qualitative.Set2)
+        st.plotly_chart(fig, use_container_width=True)
+        
+    with col2:
+        st.subheader("Données Brut")
+        st.dataframe(df.sort_values("CO2 (kg)"), hide_index=True)
+
+    st.divider()
+    st.subheader("Comparaison du Gaspillage Alimentaire")
+    fig_waste = px.scatter(df, x="Gaspillage (kg)", y="Pain (kg)", size="CO2 (kg)", color="Collège",
+                           hover_name="Collège", title="Gaspillage vs Pain perdu")
+    st.plotly_chart(fig_waste, use_container_width=True)
+
+with tab2:
+    if st.session_state.auth:
+        st.header(f"Saisie des consommations : {st.session_state.auth}")
+        
+        with st.form("form_saisie"):
+            st.subheader("⚡ Énergie")
+            c1, c2 = st.columns(2)
+            elec = c1.number_input("Électricité (kWh)", min_value=0.0)
+            gaz = c2.number_input("Gaz naturel (m3)", min_value=0.0)
+            
+            st.subheader("🍽️ Restauration (Cantine)")
+            c3, c4, c5 = st.columns(3)
+            bio_waste = c3.number_input("Déchets alimentaires (kg)", min_value=0.0)
+            bread = c4.number_input("Pain jeté (kg)", min_value=0.0)
+            napkins = c5.number_input("Serviettes en papier (unités)", min_value=0)
+            
+            c6, c7 = st.columns(2)
+            fruit = c6.number_input("Fruits entamés (kg)", min_value=0.0)
+            packaging = c7.number_input("Emballages (kg)", min_value=0.0)
+            
+            submitted = st.form_submit_button("Enregistrer les données")
+            
+            if submitted:
+                # Calcul simplifié CO2 (Facteurs ADEME approximatifs)
+                co2_calc = (elec * 0.08) + (gaz * 2.05) + (bio_waste * 2.5)
+                new_entry = {
+                    "Collège": st.session_state.auth,
+                    "Elec (kWh)": elec, "Gaz (m3)": gaz,
+                    "Gaspillage (kg)": bio_waste, "Pain (kg)": bread,
+                    "CO2 (kg)": round(co2_calc, 1)
+                }
+                st.session_state.data_history.append(new_entry)
+                st.success("Données enregistrées avec succès !")
+    else:
+        st.warning("Veuillez vous connecter via la barre latérale pour saisir vos données.")
+
+st.sidebar.divider()
+st.sidebar.caption("Développé pour le Défi Bas Carbone 2024")
+
+### Pour rendre les données persistantes
+Actuellement, si vous rafraîchissez l'application, les données saisies par les collèges disparaîtront car elles sont stockées en "session". Pour que le défi soit réel sur plusieurs semaines, je vous conseille d'utiliser **Streamlit GSheets Connection**. Cela permet de transformer un Google Sheet en base de données gratuite et partagée.
+
+Dites-moi si vous souhaitez que je vous aide à configurer la connexion au Google Sheet !
