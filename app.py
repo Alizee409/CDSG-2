@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-import time
 
 # --- CONFIGURATION ---
 st.set_page_config(page_title="Défi Bas Carbone Collèges", layout="wide")
@@ -13,7 +12,7 @@ COLLEGES_AUTH = {
     "Collège Victor Hugo": "HUGO2024"
 }
 
-# Données initiales (avec l'Eau ajoutée !)
+# Données initiales
 if 'data_history' not in st.session_state:
     st.session_state.data_history = [
         {
@@ -35,10 +34,6 @@ if 'data_history' not in st.session_state:
             "Serviettes papier (kg)": 6.5, "Fruits entamés (kg)": 12.0, "Emballages (kg)": 22.0
         }
     ]
-
-# Gestion du message de succès géant
-if 'show_success' not in st.session_state:
-    st.session_state.show_success = False
 
 # --- SYSTEME DE CONNEXION ---
 if 'auth' not in st.session_state:
@@ -63,17 +58,6 @@ else:
 
 # --- INTERFACE PRINCIPALE ---
 st.title("🌱 Défi Bas Carbone Inter-Collèges")
-
-# Affichage du message GÉANT si validation
-if st.session_state.show_success:
-    st.markdown("""
-        <div style="text-align: center; padding: 40px; background-color: #d8f3dc; border-radius: 20px; border: 4px solid #52b788; margin-bottom: 30px; animation: pulse 1s infinite;">
-            <h1 style="color: #1b4332; font-size: 70px; margin: 0;">🎉 C'est fait ! Merci ! 🌍</h1>
-            <p style="color: #2d6a4f; font-size: 20px; margin-top: 10px;">Vos données ont été enregistrées et les graphiques sont à jour.</p>
-        </div>
-        """, unsafe_allow_html=True)
-    st.balloons()
-    st.session_state.show_success = False # Réinitialise pour la prochaine fois
 
 tab1, tab2 = st.tabs(["📊 Classement & Comparaisons", "📝 Saisie des consommations"])
 
@@ -128,7 +112,8 @@ with tab2:
         
         current_data = next((item for item in st.session_state.data_history if item["Collège"] == st.session_state.auth), None)
         
-        with st.form("form_saisie"):
+        # Le formulaire reste sur place sans recharger toute la page
+        with st.form("form_saisie", clear_on_submit=False):
             st.subheader("⚡ Énergie & Fluides")
             c1, c2, c3 = st.columns(3)
             elec = c1.number_input("Consommation Électricité (kWh)", min_value=0.0, step=1.0, value=current_data["Consommation Électricité (kWh)"] if current_data else 0.0)
@@ -149,10 +134,10 @@ with tab2:
             submit = st.form_submit_button("Valider les données")
             
             if submit:
-                # 1. Supprimer l'ancienne ligne
+                # 1. Supprimer l'ancienne ligne du collège
                 st.session_state.data_history = [item for item in st.session_state.data_history if item["Collège"] != st.session_state.auth]
                 
-                # 2. Insérer les nouvelles données
+                # 2. Insérer les nouvelles données dans le tableau
                 new_data = {
                     "Collège": st.session_state.auth, 
                     "Consommation Électricité (kWh)": elec, "Consommation Gaz (m3)": gaz, "Consommation Eau (m3)": eau,
@@ -161,9 +146,12 @@ with tab2:
                 }
                 st.session_state.data_history.append(new_data)
                 
-                # Active l'affichage du message géant et force le rafraîchissement immédiat
-                st.session_state.show_success = True
-                st.rerun()
+                # 3. Affichage du message ludique DIRECTEMENT ICI avec une croix pour le fermer (icon)
+                st.toast("🌍 Données mises à jour avec succès !", icon="🎉")
+                
+                # Message visible en grand fermable automatiquement au clic
+                st.success("🎉 C'est fait ! Merci !", icon="✅")
+                st.balloons()
     else:
         st.info("👈 Veuillez sélectionner votre collège et entrer son code secret dans la barre latérale pour débloquer le formulaire de saisie.")
 
