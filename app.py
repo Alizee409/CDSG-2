@@ -35,6 +35,10 @@ if 'data_history' not in st.session_state:
         }
     ]
 
+# Initialisation d'une variable pour suivre le succès de la soumission
+if 'form_success' not in st.session_state:
+    st.session_state.form_success = False
+
 # --- SYSTEME DE CONNEXION ---
 if 'auth' not in st.session_state:
     st.session_state.auth = None
@@ -47,6 +51,7 @@ if st.session_state.auth is None:
         if st.button("Se connecter"):
             if COLLEGES_AUTH.get(college_sel) == password:
                 st.session_state.auth = college_sel
+                st.session_state.form_success = False # Reset le message de succès au changement de session
                 st.rerun()
             else:
                 st.error("Code incorrect")
@@ -54,6 +59,7 @@ else:
     st.sidebar.success(f"Connecté : {st.session_state.auth}")
     if st.sidebar.button("Se déconnecter"):
         st.session_state.auth = None
+        st.session_state.form_success = False
         st.rerun()
 
 # --- INTERFACE PRINCIPALE ---
@@ -146,12 +152,18 @@ with tab2:
                 }
                 st.session_state.data_history.append(new_data)
                 
-                # 3. Affichage du message ludique DIRECTEMENT ICI avec une croix pour le fermer (icon)
-                st.toast("🌍 Données mises à jour avec succès !", icon="🎉")
-                
-                # Message visible en grand fermable automatiquement au clic
-                st.success("🎉 C'est fait ! Merci !", icon="✅")
-                st.balloons()
+                # On active le flag de succès et on recharge la page pour actualiser l'onglet 1
+                st.session_state.form_success = True
+                st.rerun()
+
+        # 3. Affichage des messages de succès à l'EXTÉRIEUR du formulaire
+        if st.session_state.form_success:
+            st.toast("🌍 Données mises à jour avec succès !", icon="🎉")
+            st.success("🎉 C'est fait ! Les graphiques ont été mis à jour dans l'autre onglet. Merci !", icon="✅")
+            st.balloons()
+            # On repasse à False pour éviter que les ballons reviennent en boucle si on clique ailleurs
+            st.session_state.form_success = False
+
     else:
         st.info("👈 Veuillez sélectionner votre collège et entrer son code secret dans la barre latérale pour débloquer le formulaire de saisie.")
 
