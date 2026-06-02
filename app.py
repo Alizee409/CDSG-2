@@ -11,7 +11,7 @@ COLLEGES_AUTH = {
     "Collège Jean Jaurès": "JAURES2024",
     "Collège Marie Curie": "CURIE2024",
     "Collège Victor Hugo": "HUGO2024",
-    "Collège Test de l'Espace": "ESPACE2026",   <-- Tu ajoutes le nouveau collège ici !
+    "Collège Test de l'Espace": "ESPACE2026",
     "autre college encore": "AUTRE2026"#
 }
 
