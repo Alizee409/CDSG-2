@@ -6,11 +6,12 @@ import streamlit.components.v1 as components  # Pour intégrer le formulaire d'e
 # --- CONFIGURATION DE LA PAGE ---
 st.set_page_config(page_title="Défi Bas Carbone Collèges", layout="wide")
 
-# Liste des collèges autorisés et leurs codes d'accès (Données de simulation)
+# Liste des collèges autorisés et leurs codes d'accès
 COLLEGES_AUTH = {
     "Collège Jean Jaurès": "JAURES2024",
     "Collège Marie Curie": "CURIE2024",
-    "Collège Victor Hugo": "HUGO2024"
+    "Collège Victor Hugo": "HUGO2024",
+    "Collège Test de l'Espace": "ESPACE2026"  # <-- Tu ajoutes le nouveau collège ici !
 }
 
 if 'data_history' not in st.session_state:
