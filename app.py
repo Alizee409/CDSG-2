@@ -63,7 +63,7 @@ else:
         st.rerun()
 
 # --- INTERFACE PRINCIPALE ---
-st.title("🌱 Défi Bas Carbone Inter-Collèges")
+st.title("Défi Bas Carbone Inter-Collèges")
 
 tab1, tab2 = st.tabs(["📊 Classement & Comparaisons", "📝 Saisie des consommations"])
 
@@ -72,7 +72,7 @@ with tab1:
     df = pd.DataFrame(st.session_state.data_history)
     
     # 1. SECTION ENERGIE & EAU
-    st.subheader("⚡ Zoom sur les Énergies & l'Eau")
+    st.subheader("Zoom sur les Énergies & l'Eau")
     col_en_1, col_en_2, col_en_3 = st.columns(3)
     
     with col_en_1:
