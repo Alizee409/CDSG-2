@@ -142,6 +142,29 @@ def page_tableau_de_bord():
                 fruits = c7.number_input("Fruits entamés (kg)", min_value=0.0, step=0.5, value=current_data["Fruits entamés (kg)"] if current_data else 0.0)
                 emballages = c8.number_input("Emballages jetés (kg)", min_value=0.0, step=0.5, value=current_data["Emballages (kg)"] if current_data else 0.0)
                 
+                # --- AJOUT DU GRAPHIQUE ROND EN TEMPS RÉEL ---
+                st.write("---")
+                st.subheader("📊 Aperçu en temps réel de la répartition des déchets")
+                
+                # Création d'un dictionnaire temporaire avec les valeurs en direct des inputs
+                dict_direct = {
+                    "Type de déchet": ["Déchets Alimentaires", "Pain jeté", "Serviettes papier", "Fruits entamés", "Emballages"],
+                    "Quantité (kg)": [dechets, pain, serviettes, fruits, emballages]
+                }
+                df_direct = pd.DataFrame(dict_direct)
+                
+                # On s'assure qu'il y a au moins une valeur supérieure à 0 pour afficher le graphique rond
+                if df_direct["Quantité (kg)"].sum() > 0:
+                    fig_live = px.pie(df_direct, values="Quantité (kg)", names="Type de déchet",
+                                      title=f"Répartition des pertes pour {st.session_state.auth}",
+                                      color_discrete_sequence=px.colors.qualitative.Set2)
+                    # Configuration pour rendre le graphique grand et lisible
+                    fig_live.update_layout(height=500)
+                    st.plotly_chart(fig_live, use_container_width=True)
+                else:
+                    st.info("Veuillez saisir des valeurs supérieures à 0 pour voir le graphique circulaire.")
+                st.write("---")
+                
                 submit = st.form_submit_button("Valider les données")
                 
                 if submit:
