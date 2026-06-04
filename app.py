@@ -125,64 +125,60 @@ def page_tableau_de_bord():
             st.header(f"✍️ Formulaire de saisie pour : {st.session_state.auth}")
             current_data = next((item for item in st.session_state.data_history if item["Collège"] == st.session_state.auth), None)
             
-            with st.form("form_saisie", clear_on_submit=False):
-                st.subheader("⚡ Énergie & Fluides")
-                c1, c2, c3 = st.columns(3)
-                elec = c1.number_input("Consommation Électricité (kWh)", min_value=0.0, step=1.0, value=current_data["Consommation Électricité (kWh)"] if current_data else 0.0)
-                gaz = c2.number_input("Consommation Gaz (m3)", min_value=0.0, step=1.0, value=current_data["Consommation Gaz (m3)"] if current_data else 0.0)
-                eau = c3.number_input("Consommation Eau (m3)", min_value=0.0, step=1.0, value=current_data["Consommation Eau (m3)"] if current_data else 0.0)
+            # --- MODIFICATION ICI : Suppression de st.form pour permettre le temps réel ---
+            st.subheader("⚡ Énergie & Fluides")
+            c1, c2, c3 = st.columns(3)
+            elec = c1.number_input("Consommation Électricité (kWh)", min_value=0.0, step=1.0, value=current_data["Consommation Électricité (kWh)"] if current_data else 0.0)
+            gaz = c2.number_input("Consommation Gaz (m3)", min_value=0.0, step=1.0, value=current_data["Consommation Gaz (m3)"] if current_data else 0.0)
+            eau = c3.number_input("Consommation Eau (m3)", min_value=0.0, step=1.0, value=current_data["Consommation Eau (m3)"] if current_data else 0.0)
+            
+            st.subheader("🍽️ Pertes et Déchets")
+            c4, c5, c6 = st.columns(3)
+            dechets = c4.number_input("Déchets alimentaires globaux (kg)", min_value=0.0, step=0.5, value=current_data["Déchets Alimentaires (kg)"] if current_data else 0.0)
+            pain = c5.number_input("Pain jeté (kg)", min_value=0.0, step=0.5, value=current_data["Pain jeté (kg)"] if current_data else 0.0)
+            serviettes = c6.number_input("Serviettes en papier (kg)", min_value=0.0, step=0.1, value=current_data["Serviettes papier (kg)"] if current_data else 0.0)
+            
+            c7, c8 = st.columns(2)
+            fruits = c7.number_input("Fruits entamés (kg)", min_value=0.0, step=0.5, value=current_data["Fruits entamés (kg)"] if current_data else 0.0)
+            emballages = c8.number_input("Emballages jetés (kg)", min_value=0.0, step=0.5, value=current_data["Emballages (kg)"] if current_data else 0.0)
+            
+            # --- GRAND GRAPHIQUE ROND EN TEMPS RÉEL (MIS À JOUR À CHAQUE CHANGEMENT) ---
+            st.divider()
+            st.subheader("📊 Aperçu en temps réel de la répartition des déchets (Cantine)")
+            
+            dict_direct = {
+                "Type de déchet": ["Déchets Alimentaires", "Pain jeté", "Serviettes papier", "Fruits entamés", "Emballages"],
+                "Quantité (kg)": [dechets, pain, serviettes, fruits, emballages]
+            }
+            df_direct = pd.DataFrame(dict_direct)
+            
+            if df_direct["Quantité (kg)"].sum() > 0:
+                fig_live = px.pie(df_direct, values="Quantité (kg)", names="Type de déchet",
+                                  title=f"Répartition actuelle des pertes - {st.session_state.auth}",
+                                  color_discrete_sequence=px.colors.qualitative.Set2)
+                fig_live.update_layout(height=550) # Rendu plus grand
+                st.plotly_chart(fig_live, use_container_width=True)
+            else:
+                st.info("Saisissez des valeurs pour voir la répartition dans le graphique en secteurs.")
+            
+            st.divider()
+            
+            # Bouton de validation simple (remplace le form_submit_button)
+            submit = st.button("💾 Valider et sauvegarder les données")
+            
+            if submit:
+                donnees_actuelles = charger_donnees()
+                donnees_nettoyees = [item for item in donnees_actuelles if item["Collège"] != st.session_state.auth]
                 
-                st.subheader("🍽️ Pertes et Déchets")
-                c4, c5, c6 = st.columns(3)
-                dechets = c4.number_input("Déchets alimentaires globaux (kg)", min_value=0.0, step=0.5, value=current_data["Déchets Alimentaires (kg)"] if current_data else 0.0)
-                pain = c5.number_input("Pain jeté (kg)", min_value=0.0, step=0.5, value=current_data["Pain jeté (kg)"] if current_data else 0.0)
-                serviettes = c6.number_input("Serviettes en papier (kg)", min_value=0.0, step=0.1, value=current_data["Serviettes papier (kg)"] if current_data else 0.0)
-                
-                c7, c8 = st.columns(2)
-                fruits = c7.number_input("Fruits entamés (kg)", min_value=0.0, step=0.5, value=current_data["Fruits entamés (kg)"] if current_data else 0.0)
-                emballages = c8.number_input("Emballages jetés (kg)", min_value=0.0, step=0.5, value=current_data["Emballages (kg)"] if current_data else 0.0)
-                
-                # --- AJOUT DU GRAPHIQUE ROND EN TEMPS RÉEL ---
-                st.write("---")
-                st.subheader("📊 Aperçu en temps réel de la répartition des déchets")
-                
-                # Création d'un dictionnaire temporaire avec les valeurs en direct des inputs
-                dict_direct = {
-                    "Type de déchet": ["Déchets Alimentaires", "Pain jeté", "Serviettes papier", "Fruits entamés", "Emballages"],
-                    "Quantité (kg)": [dechets, pain, serviettes, fruits, emballages]
+                new_data = {
+                    "Collège": st.session_state.auth, "Consommation Électricité (kWh)": elec, "Consommation Gaz (m3)": gaz, "Consommation Eau (m3)": eau,
+                    "Déchets Alimentaires (kg)": dechets, "Pain jeté (kg)": pain, "Serviettes papier (kg)": serviettes, "Fruits entamés (kg)": fruits, "Emballages (kg)": emballages
                 }
-                df_direct = pd.DataFrame(dict_direct)
+                donnees_nettoyees.append(new_data)
                 
-                # On s'assure qu'il y a au moins une valeur supérieure à 0 pour afficher le graphique rond
-                if df_direct["Quantité (kg)"].sum() > 0:
-                    fig_live = px.pie(df_direct, values="Quantité (kg)", names="Type de déchet",
-                                      title=f"Répartition des pertes pour {st.session_state.auth}",
-                                      color_discrete_sequence=px.colors.qualitative.Set2)
-                    # Configuration pour rendre le graphique grand et lisible
-                    fig_live.update_layout(height=500)
-                    st.plotly_chart(fig_live, use_container_width=True)
-                else:
-                    st.info("Veuillez saisir des valeurs supérieures à 0 pour voir le graphique circulaire.")
-                st.write("---")
-                
-                submit = st.form_submit_button("Valider les données")
-                
-                if submit:
-                    # Charger les dernières données du fichier pour éviter les conflits
-                    donnees_actuelles = charger_donnees()
-                    donnees_nettoyees = [item for item in donnees_actuelles if item["Collège"] != st.session_state.auth]
-                    
-                    new_data = {
-                        "Collège": st.session_state.auth, "Consommation Électricité (kWh)": elec, "Consommation Gaz (m3)": gaz, "Consommation Eau (m3)": eau,
-                        "Déchets Alimentaires (kg)": dechets, "Pain jeté (kg)": pain, "Serviettes papier (kg)": serviettes, "Fruits entamés (kg)": fruits, "Emballages (kg)": emballages
-                    }
-                    donnees_nettoyees.append(new_data)
-                    
-                    # SAUVEGARDE PHYSIQUE DANS LE FICHIER
-                    sauvegarder_donnees(donnees_nettoyees)
-                    
-                    st.session_state.form_success = True
-                    st.rerun()
+                sauvegarder_donnees(donnees_nettoyees)
+                st.session_state.form_success = True
+                st.rerun()
 
             if st.session_state.form_success:
                 st.toast("🌍 Données enregistrées dans le fichier !", icon="🎉")
@@ -229,10 +225,9 @@ def page_admin():
     st.title("⚙️ Panneau Administrateur")
     st.subheader("Ajouter manuellement un nouvel établissement autorisé")
     
-    # Mot de passe secret pour protéger cette page (Optionnel mais recommandé)
     admin_password = st.text_input("Mot de passe Administrateur", type="password")
     
-    if admin_password == "ADMIN2026": # <--- Change ce mot de passe secret si tu veux !
+    if admin_password == "ADMIN2026":
         with st.form("form_admin_add"):
             nouveau_nom = st.text_input("Nom du nouveau collège (Ex: Collège Pasteur)")
             nouveau_code = st.text_input("Code secret à lui attribuer (Ex: PASTEUR2026)")
@@ -247,11 +242,9 @@ def page_admin():
                     if nouveau_nom in colleges_actuels:
                         st.error("❌ Ce collège existe déjà !")
                     else:
-                        # 1. Ajouter aux collèges autorisés
                         colleges_actuels[nouveau_nom] = nouveau_code
                         sauvegarder_colleges(colleges_actuels)
                         
-                        # 2. Créer une ligne de données vide (initialisée à 0) pour ce collège
                         nouvelle_ligne_vide = {
                             "Collège": nouveau_nom, "Consommation Électricité (kWh)": 0.0, "Consommation Gaz (m3)": 0.0, "Consommation Eau (m3)": 0.0,
                             "Déchets Alimentaires (kg)": 0.0, "Pain jeté (kg)": 0.0, "Serviettes papier (kg)": 0.0, "Fruits entamés (kg)": 0.0, "Emballages (kg)": 0.0
